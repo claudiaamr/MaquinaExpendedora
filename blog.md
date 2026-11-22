@@ -1,107 +1,103 @@
 # Práctica 3 — Máquina expendedora con Arduino UNO
-
-**Asignatura:** Sistemas Empotrados y de Tiempo Real  
-**Autor:** Claudia Morales Rojas
+**Asignatura:** Sistemas Empotrados y de Tiempo Real 
+**Autora:** Claudia Morales Rojas
 
 
 
 ## 1. Objetivo y montaje
 
-El objetivo de esta práctica es programar una máquina expendedora utilizando Arduino UNO. La máquina detecta la presencia de un cliente, muestra información ambiental, permite seleccionar una bebida y simula su preparación. También dispone de un modo de administración.
+He programado un controlador de máquina expendedora con Arduino UNO. Detecta a un cliente mediante ultrasonidos, muestra temperatura y humedad, permite escoger una bebida y simula su preparación. Además, dispone de un menú de Administración para consultar medidas y modificar precios.
 
 ### Esquema del circuito
-
-El circuito se ha diseñado utilizando Fritzing.
-
+He realizado el montaje en protoboard y su representación en Fritzing.
 ![Esquema del circuito](esquematico.png)
+| Componente | Conexión a Arduino UNO |
+|---|---|
+| LED1 rojo / LED2 verde | D9 / D3 |
+| Botón externo / botón del joystick | D2 (INT0) / D13 |
+| Joystick X / Y | A0 / A1 |
+| DHT11 | A2 |
+| HC-SR04 TRIGGER / ECHO | D8 / D7 |
+| LCD (RS, E, D4, D5, D6, D7) | D12, D11, D5, D4, A4, D6 |
+El botón externo tiene una **resistencia pull-up externa** y está configurado como `INPUT`. Para el botón del joystick utilizo `INPUT_PULLUP`, aprovechando la resistencia interna. Así, ambos presentan HIGH sin pulsar y LOW al pulsarlos, evitando entradas flotantes. Los **LEDs tienen resistencias en serie** para limitar la corriente; el montaje también incluye una resistencia asociada al LCD.
 
-He utilizado una **resistencia pull-up externa** para el botón externo y `INPUT_PULLUP` para el joystick. Así evito lecturas incorrectas y consigo que ambos botones estén en HIGH sin pulsar y en LOW al pulsarlos. En el joystick aprovecho la resistencia interna de Arduino para no añadir más componentes.
-
-También he colocado **resistencias en serie con los LEDs** para limitar la corriente y evitar que se dañen. En el **LCD**, he utilizado una resistencia para su correcto funcionamiento, evitando una conexión directa sin limitación de corriente.
+### Fotografías del montaje
+![Montaje completo](montaje.jpg)
+![Detalle del circuito](detalle.jpg)
 
 
 
 ## 2. Funcionamiento
 
-El programa se organiza en tres modos principales.
+### Arranque
+Al encender Arduino, la LCD muestra `CARGANDO ...` y LED1 parpadea mediante interrupciones periódicas de **TimerOne**. Al finalizar la secuencia, el programa pasa al estado de espera.
 
-### Modo Arranque
-
-Al encender Arduino, la pantalla muestra `CARGANDO...` mientras el led rojo parpadea tres veces con intervalos de un segundo. Los parpadeos se controlan mediante TimerOne. Al terminar, la máquina pasa automáticamente al modo Servicio.
-
-### Modo Servicio
-
-El sensor HC-SR04 mide continuamente la distancia. Cuando detecta un cliente a menos de 100 cm, la pantalla muestra la temperatura y humedad durante 5 segundos.
-Después aparece el catálogo de productos:
-
+### Servicio
+En espera, la LCD muestra `ESPERANDO` y `CLIENTE` en sus dos filas. El **HC-SR04** toma medidas periódicas y, si detecta una distancia inferior a **100 cm**, se inicia la monitorización: durante **5 segundos** se muestran temperatura y humedad del **DHT11**, con lecturas programadas aproximadamente cada segundo.
+Después se muestra un producto y su precio, y el joystick permite recorrer el catálogo. Los precios iniciales son:
 | Producto | Precio |
-|---|---|
+|---|---:|
 | Café Solo | 1,00 € |
 | Café Cortado | 1,10 € |
 | Café Doble | 1,25 € |
 | Café Premium | 1,50 € |
 | Chocolate | 2,00 € |
+Al pulsar el joystick se selecciona la bebida. El LCD muestra `Preparando` y `Cafe...`; la preparación simulada dura entre **4 y 8 segundos**, mediante `random(4000, 8001)`. Durante ese tiempo aumenta el brillo de **LED2** con PWM, según el tiempo transcurrido. Después aparece `RETIRE BEBIDA` durante **3 segundos** y la máquina vuelve a espera. Una pulsación del botón externo de **2 a 3 segundos**, detectada al soltarlo, cancela la operación sin reiniciar la placa.
 
-El joystick permite navegar entre los productos y su botón confirma la selección. La preparación dura entre 4 y 8 segundos, utilizando `random()`. Durante este tiempo, el led verde aumenta progresivamente su brillo mediante PWM, indicando el porcentaje de preparación. Al finalizar aparece `RETIRE BEBIDA` durante 3 segundos y la máquina vuelve a esperar un cliente. El botón externo permite cancelar la operación mediante una pulsación de entre 2 y 3 segundos.
-
-### Modo Administración
-
-Se accede manteniendo pulsado el botón externo durante al menos 5 segundos. En este modo ambos leds permanecen encendidos.
-El menú permite:
-- Consultar temperatura y humedad.
-- Consultar la distancia del sensor ultrasónico.
-- Consultar los segundos transcurridos desde el encendido.
-- Modificar los precios en incrementos de 0,05 €.
-
-La navegación se realiza mediante el joystick. Su botón confirma y el movimiento hacia la izquierda permite retroceder o descartar cambios. Para salir de Administración se mantiene pulsado el botón externo durante 5 segundos.
+### Administración
+Se entra o sale manteniendo pulsado el botón externo **al menos 5 segundos** (salvo durante Arranque, que el código excluye). Al entrar, se encienden ambos LEDs, aparece `MODO ADMIN` durante **2 segundos** y después se muestra el menú: **Ver temperatura**, **Ver distancia sensor**, **Ver contador** y **Modificar precios**.
+Con el joystick se cambia de opción, se confirma con su pulsador y se vuelve atrás moviéndolo a la izquierda. La temperatura y el contador se refrescan cada **1 segundo**, y la vista de distancia cada **250 ms**. En la edición, los precios se modifican en pasos de **0,05 €** y se confirma con el pulsador; al volver a la izquierda se recupera el precio anterior. Los importes se comparten con el catálogo de Servicio y no se guardan en EEPROM.
 
 
 
-## 3. Diseño e implementación de la solución
+## 3. Diseño de la solución y recursos utilizados
 
-### 3.1. Organización del programa
+### 3.1. Organización por archivos y estados
+He separado el proyecto en **siete archivos `.ino`**, según su función:
+- **`MaquinaExpendedora.ino`:** pines, librerías, `setup()`, `loop()`, tareas y estado de espera.
+- **`arranque.ino`:** mensaje inicial y parpadeo del LED1.
+- **`presencia.ino`:** medición de distancia por fases.
+- **`monitorizacion.ino`:** lectura y visualización del DHT11.
+- **`navegacion.ino`:** catálogo, joystick, preparación y retirada.
+- **`administracion.ino`:** menú, consultas y modificación de precios.
+- **`reinicio.ino`:** interrupción y control de pulsaciones del botón externo.
+La variable **`estadoMaquina`** indica qué hace la máquina: **0 arranque, 1 espera, 2 monitorización, 3 selección, 4 preparación, 5 retirada y 6 administración**. En `tareaControlEstados()` se llama a la función correspondiente. He separado los archivos para que cada parte tenga una responsabilidad clara y el programa resulte más fácil de revisar.
 
-He dividido el código en siete archivos `.ino` para separar las diferentes funcionalidades de la máquina expendedora:
+### 3.2. ArduinoThread
+He utilizado **ArduinoThread** con dos tareas registradas en un `ThreadController`:
+- **`tareaBoton` (10 ms):** ejecuta `tareaControlBoton()`, que llama a `procesarBotonExterno()`.
+- **`tareaEstados` (1 ms):** ejecuta `tareaControlEstados()` para actualizar la fase de funcionamiento.
+El controlador se ejecuta desde `loop()`. Esta separación me permite atender las pulsaciones mientras se realizan otras operaciones. Los *threads* son **cooperativos**, no se ejecutan en paralelo y los intervalos indican cuándo se intenta ejecutar cada tarea, no un tiempo exacto garantizado.
 
-- **MaquinaExpendedora.ino:** contiene la configuración de los componentes, la inicialización de ArduinoThread, el bucle principal y el control de los estados.
-- **arranque.ino:** gestiona los tres parpadeos iniciales mediante TimerOne e imprime el mensaje "CARGANDO..." a través del LCD.
-- **presencia.ino:** realiza las mediciones de distancia con el sensor HC-SR04.
-- **monitorizacion.ino:** muestra la temperatura y la humedad durante cinco segundos.
-- **navegacion.ino:** gestiona la navegación por el catálogo mediante el joystick, la selección de productos y la simulación de la preparación.
-- **administracion.ino:** controla el menú de administración, la consulta de sensores y la modificación de precios.
-- **reinicio.ino:** gestiona las pulsaciones del botón externo para cancelar operaciones o entrar y salir de Administración.
+### 3.3. Interrupción hardware del botón
+El botón externo está conectado al pin **D2 (INT0)**. Uso `attachInterrupt(..., FALLING)` porque al pulsarlo cambia de HIGH a LOW. La ISR solo pone `eventoBotonPendiente = true`; declaro esa variable **`volatile`** porque se modifica en la interrupción y se consulta fuera de ella. Después, `procesarBotonExterno()` mide la duración con `millis()`. Así mantengo la ISR corta y distingo la cancelación de **2–3 s** del acceso a Administración de **5 s**.
 
-Esta división permite mantener separadas las distintas funcionalidades, facilitando la comprensión del código. El funcionamiento se controla mediante la variable `estadoMaquina`, que identifica el estado actual. En `tareaControlEstados()` se comprueba su valor para ejecutar la función correspondiente.
-
-### 3.2. Gestión de tareas con ArduinoThread
-
-He utilizado **ArduinoThread** para organizar el programa en dos tareas periódicas:
-- **tareaBoton (10 ms):** ejecuta `procesarBotonExterno()`, que comprueba la duración de las pulsaciones.
-- **tareaEstados (1 ms):** ejecuta `tareaControlEstados()`, encargada de actualizar el funcionamiento de la máquina según su estado.
-
-Ambas tareas se añaden a un `ThreadController`, que se ejecuta desde `loop()`. He separado estas tareas porque el botón externo debe poder atenderse mientras la máquina realiza otras operaciones, como mostrar productos o preparar una bebida. La medición ultrasónica se mantiene fuera de ArduinoThread y se comprueba directamente desde `loop()`, ya que necesita detectar rápidamente los cambios de la señal ECHO.
-
-### 3.3. Interrupciones hardware
-
-Para detectar las pulsaciones del botón externo he utilizado la interrupción **INT0**, correspondiente al pin digital 2 de Arduino UNO. La interrupción se configura con `FALLING`, porque el pulsador tiene una resistencia pull-up externa y su señal pasa de HIGH a LOW al presionarlo. La ISR únicamente modifica la variable `volatile` `eventoBotonPendiente` (que es volatile porque se modifica dentro de la ISR y se consulta fuera de ella). El procesamiento de la pulsación se realiza posteriormente en `procesarBotonExterno()`. He utilizado esta solución para detectar el inicio de las pulsaciones sin tener que comprobar continuamente el botón y evitar operaciones largas dentro de la ISR. Mediante `millis()` se diferencia entre una pulsación de 2-3 segundos, que cancela la operación, y otra de al menos 5 segundos, que permite entrar o salir de Administración.
-
-### 3.4. Control de tiempos y medición ultrasónica
-
-He utilizado **`millis()` y `micros()`** para controlar los diferentes intervalos de tiempo sin recurrir a `delay()`, ya que esta función realiza una espera activa que consume recursos de la CPU innecesariamente e impide que el programa continúe ejecutando otras tareas durante ese tiempo.
-`millis()` se utiliza para controlar la monitorización ambiental, la navegación con el joystick, la preparación de las bebidas y las pulsaciones del botón. En cambio, para el sensor HC-SR04 utilizo `micros()`, porque necesito generar un pulso TRIGGER de al menos 10 microsegundos y medir la duración de ECHO.
-
-He dividido la medición en cuatro fases: activar TRIGGER, finalizar el pulso, esperar a que ECHO pase a HIGH y esperar a que vuelva a LOW. Esta organización evita utilizar `pulseIn()`, que podría mantener el programa esperando una respuesta del sensor. También he establecido un tiempo máximo de espera de 25 ms para cancelar una medición si no se recibe la señal esperada y permitir un nuevo intento.
-
-La distancia se calcula mediante:
-
-**Distancia (cm) = tiempo de ECHO (µs) × 0,0343 / 2**
-
-Se divide entre dos porque el sonido realiza un recorrido de ida y vuelta.
+### 3.4. Control temporal y HC-SR04
+He utilizado **`millis()`** para los tiempos de menús, pulsaciones, monitorización y preparación, y **`micros()`** para el sensor ultrasónico, que trabaja con pulsos de microsegundos. De esta forma evito `delay()`, que detendría el flujo del programa durante las esperas.
+La medida del HC-SR04 se organiza en **cuatro fases (0 a 3)**: activar TRIGGER, mantenerlo HIGH al menos **10 µs** y desactivarlo, esperar a que ECHO suba a HIGH y esperar a que vuelva a LOW. Así no necesito utilizar `pulseIn()`, que podría bloquear la ejecución mientras espera el pulso. Entre mediciones completadas o canceladas dejo al menos **100 ms**, y si ECHO no cambia como se espera tras **25 ms**, cancelo ese intento.
+La distancia se calcula con la velocidad del sonido utilizada en el programa:
+**Distancia (cm) = tiempo de ECHO (µs) × 0,0343 / 2**.
+Divido entre dos porque el sonido recorre la distancia de ida y vuelta.
 
 ### 3.5. TimerOne y PWM
-
-He utilizado **TimerOne** para gestionar los parpadeos del LED1 durante el arranque. El temporizador genera interrupciones cada segundo, permitiendo controlar el LED sin detener el programa. Durante la preparación de bebidas utilizo **PWM** para representar visualmente el progreso mediante el LED2. La duración de cada preparación se genera con `random()` entre 4 y 8 segundos. A partir del tiempo transcurrido calculo un valor de PWM entre 0 y 255, que aplico mediante `analogWrite()`. He conectado el LED2 al pin 3 porque permite utilizar PWM sin interferir con TimerOne.
+Para el Arranque uso **TimerOne**, configurado con `Timer1.initialize(1000000)`, de manera que su ISR se llama aproximadamente cada **1 segundo** y cambia LED1 sin emplear `delay()`.
+Durante la preparación, el **LED2 está conectado al pin D3**, que admite PWM y evita utilizar los pines PWM asociados a Timer1. El nivel de brillo se obtiene según la parte del tiempo de preparación que haya transcurrido:
+```cpp
+nivelPWM = (tiempoTranscurrido * 255) / duracionPreparacion;
+if (nivelPWM > 255) nivelPWM = 255;
+analogWrite(pinLedPreparacion, nivelPWM);
+```
+El valor va de **0 a 255**, para que el LED indique visualmente el avance de la preparación. Al inicio del programa utilizo `randomSeed(analogRead(A3))` para inicializar la secuencia pseudoaleatoria de duraciones.
 
 ### 3.6. Watchdog
+He activado el **Watchdog de 8 segundos** con `wdt_enable(WDTO_8S)` y lo refresco en cada vuelta de `loop()` mediante `wdt_reset()`. Si el programa se bloquea y deja de refrescarlo, Arduino se reinicia. He elegido 8 segundos como margen de seguridad. Este mecanismo no sustituye los tiempos máximos de espera del sensor, porque el Watchdog puede seguir refrescándose aunque una medición no avance.
 
-He incorporado un **Watchdog de 8 segundos** como mecanismo de seguridad. Se configura mediante `wdt_enable(WDTO_8S)` y se refresca en cada iteración de `loop()` utilizando `wdt_reset()`. Si el programa se bloquea y deja de ejecutar esta instrucción durante aproximadamente 8 segundos, el microcontrolador se reinicia. He elegido este intervalo para disponer de un margen de seguridad antes de provocar el reinicio.
+
+
+## 4. Pruebas y resultados
+[PENDIENTE: describir qué se ha observado al probar el arranque, la detección de presencia, la selección, la preparación, la cancelación y Administración.]
+
+
+
+## 5. Conclusión
+La dificultad principal ha sido coordinar sensores, pulsadores, pantalla y LEDs con tiempos diferentes sin utilizar `delay()`. La división en archivos y estados, junto con ArduinoThread, las interrupciones, TimerOne y el Watchdog, me ha permitido organizar el controlador y trabajar los recursos estudiados en la asignatura.
