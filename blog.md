@@ -12,3 +12,7 @@ El objetivo de esta práctica es programar una máquina expendedora utilizando A
 El circuito se ha diseñado utilizando Fritzing.
 
 ![Esquema del circuito](esquematico.png)
+
+He utilizado una **resistencia pull-up externa** para el botón externo y `INPUT_PULLUP` para el joystick. Así evito lecturas incorrectas y consigo que ambos botones estén en HIGH sin pulsar y en LOW al pulsarlos. En el joystick aprovecho la resistencia interna de Arduino para no añadir más componentes.
+
+También he colocado **resistencias en serie con los LEDs** para limitar la corriente y evitar que se dañen. En el **LCD**, he utilizado una resistencia para su correcto funcionamiento, evitando una conexión directa sin limitación de corriente.
