@@ -23,6 +23,7 @@ He realizado el montaje en protoboard y su representación en Fritzing.
 | DHT11 | A2 |
 | HC-SR04 TRIGGER / ECHO | D8 / D7 |
 | LCD (RS, E, D4, D5, D6, D7) | D12, D11, D5, D4, A4, D6 |
+
 El botón externo tiene una **resistencia pull-up externa** y está configurado como `INPUT`. Para el botón del joystick utilizo `INPUT_PULLUP`, aprovechando la resistencia interna. Así, ambos presentan HIGH sin pulsar y LOW al pulsarlos, evitando entradas flotantes. Los **LEDs tienen resistencias en serie** para limitar la corriente; el montaje también incluye una resistencia asociada al LCD.
 
 ### Fotografías del montaje
