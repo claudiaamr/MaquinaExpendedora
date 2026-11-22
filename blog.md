@@ -82,7 +82,7 @@ He utilizado **ArduinoThread** para organizar el programa en dos tareas periódi
 
 He separado estas dos tareas para poder gestionar las pulsaciones del botón de forma independiente al funcionamiento general de la máquina. No he creado más threads porque las demás operaciones se organizan mediante `estadoMaquina` y se ejecutan cuando corresponde.
 
-La **medición ultrasónica** se comprueba directamente desde `loop()`, fuera de ArduinoThread, ya que necesita controlar pulsos de microsegundos y detectar los cambios de ECHO con rapidez. Así evito que su comprobación dependa de los intervalos de ejecución de las tareas.
+La **medición ultrasónica** se comprueba directamente desde `loop()`, fuera de ArduinoThread, ya que necesita controlar pulsos de microsegundos y detectar los cambios de ECHO con rapidez. Así no depende de un intervalo fijo de ArduinoThread, sino que se comprueba en cada iteración de loop() en los estados correspondientes. No obstante, su frecuencia de ejecución puede verse afectada por el tiempo que consuman las demás funciones del programa.
 
 El `ThreadController` se ejecuta desde `loop()`. Como Arduino UNO tiene un único núcleo, **ArduinoThread no ejecuta tareas en paralelo**, sino que utiliza planificación cooperativa. Por eso he evitado operaciones bloqueantes, que podrían retrasar la ejecución del resto de tareas.
 
