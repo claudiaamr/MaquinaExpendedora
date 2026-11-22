@@ -11,4 +11,4 @@ El objetivo de esta práctica es programar una máquina expendedora utilizando A
 
 El circuito se ha diseñado utilizando Fritzing.
 
-![Esquema del circuito](esquematico.pdf)
+![Esquema del circuito](esquematico.png)
