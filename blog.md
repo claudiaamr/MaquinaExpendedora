@@ -114,10 +114,5 @@ He activado el **Watchdog de 8 segundos** con `wdt_enable(WDTO_8S)` y lo refresc
 
 
 
-## 4. Pruebas y resultados
-[PENDIENTE: describir qué se ha observado al probar el arranque, la detección de presencia, la selección, la preparación, la cancelación y Administración.]
-
-
-
-## 5. Conclusión
+## 4. Conclusión
 La dificultad principal ha sido coordinar sensores, pulsadores, pantalla y LEDs con tiempos diferentes sin utilizar `delay()`. La división en archivos y estados, junto con ArduinoThread, las interrupciones, TimerOne y el Watchdog, me ha permitido organizar el controlador y trabajar los recursos estudiados en la asignatura.
