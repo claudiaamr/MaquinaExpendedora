@@ -1,5 +1,7 @@
 # Práctica 3 — Máquina expendedora con Arduino UNO
+
 **Asignatura:** Sistemas Empotrados y de Tiempo Real 
+
 **Autora:** Claudia Morales Rojas
 
 
