@@ -58,55 +58,33 @@ La navegación se realiza mediante el joystick. Su botón confirma y el movimien
 He dividido el código en siete archivos `.ino` para separar las diferentes funcionalidades de la máquina expendedora:
 
 - **MaquinaExpendedora.ino:** contiene la configuración de los componentes, la inicialización de ArduinoThread, el bucle principal y el control de los estados.
-- **arranque.ino:** gestiona los tres parpadeos iniciales mediante TimerOne.
+- **arranque.ino:** gestiona los tres parpadeos iniciales mediante TimerOne e imprime el mensaje "CARGANDO..." a través del LCD.
 - **presencia.ino:** realiza las mediciones de distancia con el sensor HC-SR04.
 - **monitorizacion.ino:** muestra la temperatura y la humedad durante cinco segundos.
 - **navegacion.ino:** gestiona la navegación por el catálogo mediante el joystick, la selección de productos y la simulación de la preparación.
 - **administracion.ino:** controla el menú de administración, la consulta de sensores y la modificación de precios.
 - **reinicio.ino:** gestiona las pulsaciones del botón externo para cancelar operaciones o entrar y salir de Administración.
 
-Esta división permite mantener separadas las distintas funcionalidades, facilitando la comprensión del código.
-
-El funcionamiento se controla mediante la variable `estadoMaquina`, que identifica el estado actual. En `tareaControlEstados()` se comprueba su valor para ejecutar la función correspondiente.
+Esta división permite mantener separadas las distintas funcionalidades, facilitando la comprensión del código. El funcionamiento se controla mediante la variable `estadoMaquina`, que identifica el estado actual. En `tareaControlEstados()` se comprueba su valor para ejecutar la función correspondiente.
 
 ### 3.2. Gestión de tareas con ArduinoThread
 
 He utilizado **ArduinoThread** para organizar el programa en dos tareas periódicas:
-
 - **tareaBoton (10 ms):** ejecuta `procesarBotonExterno()`, que comprueba la duración de las pulsaciones.
 - **tareaEstados (1 ms):** ejecuta `tareaControlEstados()`, encargada de actualizar el funcionamiento de la máquina según su estado.
 
-Ambas tareas se añaden a un `ThreadController`, que se ejecuta desde `loop()`.
-
-He separado estas tareas porque el botón externo debe poder atenderse mientras la máquina realiza otras operaciones, como mostrar productos o preparar una bebida.
-
-La medición ultrasónica se mantiene fuera de ArduinoThread y se comprueba directamente desde `loop()`, ya que necesita detectar rápidamente los cambios de la señal ECHO.
+Ambas tareas se añaden a un `ThreadController`, que se ejecuta desde `loop()`. He separado estas tareas porque el botón externo debe poder atenderse mientras la máquina realiza otras operaciones, como mostrar productos o preparar una bebida. La medición ultrasónica se mantiene fuera de ArduinoThread y se comprueba directamente desde `loop()`, ya que necesita detectar rápidamente los cambios de la señal ECHO.
 
 ### 3.3. Interrupciones hardware
 
-Para detectar las pulsaciones del botón externo he utilizado la interrupción **INT0**, correspondiente al pin digital 2 de Arduino UNO.
-
-La interrupción se configura con `FALLING`, porque el pulsador tiene una resistencia pull-up externa y su señal pasa de HIGH a LOW al presionarlo.
-
-La ISR únicamente modifica la variable `volatile` `eventoBotonPendiente`. El procesamiento de la pulsación se realiza posteriormente en `procesarBotonExterno()`.
-
-He utilizado esta solución para detectar el inicio de las pulsaciones sin tener que comprobar continuamente el botón y evitar operaciones largas dentro de la ISR.
-
-Mediante `millis()` se diferencia entre una pulsación de 2-3 segundos, que cancela la operación, y otra de al menos 5 segundos, que permite entrar o salir de Administración.
+Para detectar las pulsaciones del botón externo he utilizado la interrupción **INT0**, correspondiente al pin digital 2 de Arduino UNO. La interrupción se configura con `FALLING`, porque el pulsador tiene una resistencia pull-up externa y su señal pasa de HIGH a LOW al presionarlo. La ISR únicamente modifica la variable `volatile` `eventoBotonPendiente` (que es volatile porque se modifica dentro de la ISR y se consulta fuera de ella). El procesamiento de la pulsación se realiza posteriormente en `procesarBotonExterno()`. He utilizado esta solución para detectar el inicio de las pulsaciones sin tener que comprobar continuamente el botón y evitar operaciones largas dentro de la ISR. Mediante `millis()` se diferencia entre una pulsación de 2-3 segundos, que cancela la operación, y otra de al menos 5 segundos, que permite entrar o salir de Administración.
 
 ### 3.4. Control de tiempos y medición ultrasónica
 
-He utilizado **`millis()` y `micros()`** para controlar los diferentes intervalos de tiempo sin recurrir a `delay()`.
+He utilizado **`millis()` y `micros()`** para controlar los diferentes intervalos de tiempo sin recurrir a `delay()`, ya que esta función realiza una espera activa que consume recursos de la CPU innecesariamente e impide que el programa continúe ejecutando otras tareas durante ese tiempo.
+`millis()` se utiliza para controlar la monitorización ambiental, la navegación con el joystick, la preparación de las bebidas y las pulsaciones del botón. En cambio, para el sensor HC-SR04 utilizo `micros()`, porque necesito generar un pulso TRIGGER de al menos 10 microsegundos y medir la duración de ECHO.
 
-`millis()` se utiliza para controlar la monitorización ambiental, la navegación con el joystick, la preparación de las bebidas y las pulsaciones del botón.
-
-En cambio, para el sensor HC-SR04 utilizo `micros()`, porque necesito generar un pulso TRIGGER de al menos 10 microsegundos y medir la duración de ECHO.
-
-He dividido la medición en cuatro fases: activar TRIGGER, finalizar el pulso, esperar a que ECHO pase a HIGH y esperar a que vuelva a LOW.
-
-Esta organización evita utilizar `pulseIn()`, que podría mantener el programa esperando una respuesta del sensor.
-
-También he establecido un tiempo máximo de espera de 25 ms para cancelar una medición si no se recibe la señal esperada y permitir un nuevo intento.
+He dividido la medición en cuatro fases: activar TRIGGER, finalizar el pulso, esperar a que ECHO pase a HIGH y esperar a que vuelva a LOW. Esta organización evita utilizar `pulseIn()`, que podría mantener el programa esperando una respuesta del sensor. También he establecido un tiempo máximo de espera de 25 ms para cancelar una medición si no se recibe la señal esperada y permitir un nuevo intento.
 
 La distancia se calcula mediante:
 
@@ -116,20 +94,8 @@ Se divide entre dos porque el sonido realiza un recorrido de ida y vuelta.
 
 ### 3.5. TimerOne y PWM
 
-He utilizado **TimerOne** para gestionar los parpadeos del LED1 durante el arranque. El temporizador genera interrupciones cada segundo, permitiendo controlar el LED sin detener el programa.
-
-Durante la preparación de bebidas utilizo **PWM** para representar visualmente el progreso mediante el LED2.
-
-La duración de cada preparación se genera con `random()` entre 4 y 8 segundos. A partir del tiempo transcurrido calculo un valor de PWM entre 0 y 255, que aplico mediante `analogWrite()`.
-
-He conectado el LED2 al pin 3 porque permite utilizar PWM sin interferir con TimerOne.
+He utilizado **TimerOne** para gestionar los parpadeos del LED1 durante el arranque. El temporizador genera interrupciones cada segundo, permitiendo controlar el LED sin detener el programa. Durante la preparación de bebidas utilizo **PWM** para representar visualmente el progreso mediante el LED2. La duración de cada preparación se genera con `random()` entre 4 y 8 segundos. A partir del tiempo transcurrido calculo un valor de PWM entre 0 y 255, que aplico mediante `analogWrite()`. He conectado el LED2 al pin 3 porque permite utilizar PWM sin interferir con TimerOne.
 
 ### 3.6. Watchdog
 
-He incorporado un **Watchdog de 8 segundos** como mecanismo de seguridad.
-
-Se configura mediante `wdt_enable(WDTO_8S)` y se refresca en cada iteración de `loop()` utilizando `wdt_reset()`.
-
-Si el programa se bloquea y deja de ejecutar esta instrucción durante aproximadamente 8 segundos, el microcontrolador se reinicia.
-
-He elegido este intervalo para disponer de un margen de seguridad antes de provocar el reinicio.
+He incorporado un **Watchdog de 8 segundos** como mecanismo de seguridad. Se configura mediante `wdt_enable(WDTO_8S)` y se refresca en cada iteración de `loop()` utilizando `wdt_reset()`. Si el programa se bloquea y deja de ejecutar esta instrucción durante aproximadamente 8 segundos, el microcontrolador se reinicia. He elegido este intervalo para disponer de un margen de seguridad antes de provocar el reinicio.
