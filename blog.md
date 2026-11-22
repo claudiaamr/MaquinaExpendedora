@@ -12,7 +12,9 @@ He programado un controlador de máquina expendedora con Arduino UNO. Detecta a 
 
 ### Esquema del circuito
 He realizado el montaje en protoboard y su representación en Fritzing.
+
 ![Esquema del circuito](esquematico.png)
+
 | Componente | Conexión a Arduino UNO |
 |---|---|
 | LED1 rojo / LED2 verde | D9 / D3 |
