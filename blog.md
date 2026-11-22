@@ -27,8 +27,9 @@ He realizado el montaje en protoboard y su representación en Fritzing.
 El botón externo tiene una **resistencia pull-up externa** y está configurado como `INPUT`. Para el botón del joystick utilizo `INPUT_PULLUP`, aprovechando la resistencia interna. Así, ambos presentan HIGH sin pulsar y LOW al pulsarlos, evitando entradas flotantes. Los **LEDs tienen resistencias en serie** para limitar la corriente; el montaje también incluye una resistencia asociada al LCD.
 
 ### Fotografías del montaje
-![Montaje completo](montaje.jpg)
-![Detalle del circuito](detalle.jpg)
+![foto1](foto1.png)
+![foto2](foto2.png)
+![foto3](foto3.png)
 
 
 
