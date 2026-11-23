@@ -96,7 +96,7 @@ He utilizado **ArduinoThread** con un `ThreadController` para organizar cuatro t
 | `tareaEstados` | 1 ms | Gestión del estado actual |
 
 He separado las tareas según sus **necesidades temporales**: el LED cambia cada segundo, el DHT11 se lee periódicamente y el control de estados necesita actualizarse con mayor frecuencia. 
-Para el ultrasonido utilizo `setInterval(0)` para comprobar frecuentemente los cambios de ECHO. La frecuencia de medición se controla por separado mediante `millis()`, dejando al menos **1 segundo entre mediciones**. Así separo la frecuencia de comprobación de la frecuencia de medición.
+Para el ultrasonido utilizo `setInterval(0)` para comprobar frecuentemente los cambios de ECHO. La frecuencia de medición se controla por separado mediante `millis()`, dejando al menos **100 ms entre mediciones**. Así separo la frecuencia de comprobación de la frecuencia de medición.
 
 El ThreadController se ejecuta desde loop(), donde también proceso el botón externo (detectado mediante una interrupción hardware) y refresco el Watchdog.
 Como ArduinoThread utiliza **planificación cooperativa**, las tareas no se ejecutan en paralelo. Por eso he evitado retardos bloqueantes que puedan retrasar al resto.
@@ -118,7 +118,7 @@ La medición ultrasónica se divide en cuatro fases:
 3. Esperar la subida de ECHO.
 4. Detectar su bajada y calcular la distancia.
 
-He elegido este sistema por estados para **evitar `pulseIn()`**, que podría bloquear el programa mientras espera una respuesta. Entre mediciones dejo al menos **1 segundo** y utilizo un tiempo máximo de espera de **25 ms** para abandonar una medición si ECHO no responde.
+He elegido este sistema por estados para **evitar `pulseIn()`**, que podría bloquear el programa mientras espera una respuesta. Entre mediciones dejo al menos **100 ms** y utilizo un tiempo máximo de espera de **25 ms** para abandonar una medición si ECHO no responde.
 
 La distancia se calcula mediante:
 
