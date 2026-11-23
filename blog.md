@@ -104,7 +104,7 @@ Como ArduinoThread utiliza **planificación cooperativa**, las tareas no se ejec
 ### 3.3. Interrupción hardware del botón externo
 
 El botón externo está conectado al pin **D2 (INT0)** y utilizo `attachInterrupt(..., FALLING)` para detectar el paso de HIGH a LOW. La ISR únicamente activa la variable **`volatile eventoBotonPendiente`**. Después, `procesarBotonExterno()` mide la duración mediante `millis()`.
-He separado la detección y el procesamiento para **mantener la ISR corta** y diferenciar las pulsaciones de cancelación (2–3 s) y Administración (≥ 5 s).
+He separado la detección del procesamiento para **evitar realizar operaciones innecesarias dentro de la ISR** y diferenciar las pulsaciones de cancelación (2–3 s) y Administración (≥ 5 s).
 La cancelación se realiza al soltar el botón, mientras que Administración se activa al alcanzar los cinco segundos.
 
 ### 3.4. Control temporal sin bloqueos
