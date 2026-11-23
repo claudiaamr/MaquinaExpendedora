@@ -1,4 +1,4 @@
-# Práctica 3 — Máquina expendedora con Arduino UNO
+# Práctica 3 — Controlador Máquina Expendedora
 
 **Autora:** Claudia Morales Rojas
 
