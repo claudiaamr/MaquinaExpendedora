@@ -17,7 +17,7 @@ He realizado el montaje en protoboard y su representación en Fritzing.
 
 | Componente | Conexión a Arduino UNO |
 |---|---|
-| LED1 rojo / LED2 verde | D9 / D3 |
+| LED1 rojo / LED2 verde | D9 / D10 |
 | Botón externo / botón del joystick | D2 (INT0) / D13 |
 | Joystick X / Y | A0 / A1 |
 | DHT11 | A2 |
