@@ -118,7 +118,7 @@ La medición ultrasónica se divide en cuatro fases:
 3. Esperar la subida de ECHO.
 4. Detectar su bajada y calcular la distancia.
 
-He elegido este sistema por estados para **evitar `pulseIn()`**, que podría bloquear el programa mientras espera una respuesta. Entre mediciones dejo al menos **100 ms** y utilizo un tiempo máximo de espera de **25 ms** (tiempo seleccionado por mi) para abandonar una medición si ECHO no responde.
+He elegido este sistema por estados para **evitar `pulseIn()`**, que podría bloquear el programa mientras espera una respuesta. Entre mediciones dejo al menos **100 ms** y utilizo un tiempo máximo de espera de **50 ms** (tiempo seleccionado por mi) para abandonar una medición si ECHO no responde.
 
 La distancia se calcula mediante:
 
